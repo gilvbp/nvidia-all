@@ -51,20 +51,20 @@ if [ -z "$_driver_version" ] || [ "$_driver_version" = "latest" ] || [ -z "$_dri
   warning "Please make sure you have the corresponding kernel headers package installed for each kernel on your system !\n"
 
   if [[ -z $CONDITION ]]; then
-    read -p "    Which driver version do you want?`echo $'\n    > 1.Vulkan dev: 550.40.76\n      2.560 series: 560.35.03\n      3.555 series: 555.58.02\n      4.550 series: 550.120\n      5.470 series: 470.256.02\n      6.Older series\n      7.Custom version (396.xx series or higher)\n    choice[1-7?]: '`" CONDITION;
+    read -p "    Which driver version do you want?`echo $'\n    > 1.Vulkan dev: 550.40.67\n      2.560 series: 565.57.01\n      3.555 series: 555.58.02\n      4.550 series: 550.107.02\n      5.470 series: 470.256.02\n      6.Older series\n      7.Custom version (396.xx series or higher)\n    choice[1-7?]: '`" CONDITION;
   fi
     # This will be treated as the latest regular driver.
     if [ "$CONDITION" = "2" ]; then
-      echo '_driver_version=560.35.03' > options
-      echo '_md5sum=d4f54004bb80da17b3e2fb21ac17c018' >> options
+      echo '_driver_version=565.57.01' > options
+      echo '_md5sum=76dd134e9bb8bc868fa79b1e226451b2' >> options
       echo '_driver_branch=regular' >> options
     elif [ "$CONDITION" = "3" ]; then
       echo '_driver_version=555.58.02' > options
       echo '_md5sum=f6efa3d40fccc97fbac9b55fc81e30d7' >> options
       echo '_driver_branch=regular' >> options
     elif [ "$CONDITION" = "4" ]; then
-      echo '_driver_version=550.120' > options
-      echo '_md5sum=a2a40ba27ea1c375f2f5b84b66c83a33' >> options
+      echo '_driver_version=550.107.02' > options
+      echo '_md5sum=6ff5afd9e02536a14c16d6fea3089903' >> options
       echo '_driver_branch=regular' >> options
     elif [ "$CONDITION" = "5" ]; then
       echo '_driver_version=470.256.02' > options
@@ -163,8 +163,8 @@ if [ -z "$_driver_version" ] || [ "$_driver_version" = "latest" ] || [ -z "$_dri
       echo "_driver_version=$_driver_version" >> options
     # This (condition 1) will be treated as the latest Vulkan developer driver.
     else
-      echo '_driver_version=550.40.76' > options
-      echo '_md5sum=07d8e4e4fade21ddfa348a8eb92ca529' >> options
+      echo '_driver_version=550.40.67' > options
+      echo '_md5sum=8532fa52cb746abdb7d47d364f960195' >> options
       echo '_driver_branch=vulkandev' >> options
     fi
 # Package type selector
@@ -304,7 +304,7 @@ fi
 
 pkgname=("${_pkgname_array[@]}")
 pkgver=$_driver_version
-pkgrel=258
+pkgrel=257
 arch=('x86_64')
 url="http://www.nvidia.com/"
 license=('custom:NVIDIA')
@@ -379,9 +379,6 @@ source=($_source_name
         'legacy-kernel-6.6.diff'
         '6.1-6-7-8-gpl.diff'
         'kernel-6.8.patch'
-        'make-modeset-fbdev-default.diff'
-        '6.11-fbdev.diff'
-        'nvidia-sleep.conf'
 )
 
 msg2 "Selected driver integrity check behavior (md5sum or SKIP): $_md5sum" # If the driver is "known", return md5sum. If it isn't, return SKIP
@@ -435,10 +432,7 @@ md5sums=("$_md5sum"
          'b81cac7573842ebd7af30fdf851c63f9'
          'd11cb3bd76ab61a0f086aea9a0c53087'
          'f7f95287eb18be63bfad0427f13b6d43'
-         '7481cb7f52b76c426d579b115e4c84b6'
-         'c06a9359969ba331bc9fac91fe0eeff2'
-         'adfcf56ea4a4a420d9ef07b9d4b451dc'
-         '2b5b62c1265b3b6b18022a0a716e5fcd')
+         '7481cb7f52b76c426d579b115e4c84b6')
 
 if [ "$_open_source_modules" = "true" ]; then
   if [[ "$_srcbase" == "NVIDIA-kernel-module-source" ]]; then
@@ -903,24 +897,6 @@ DEST_MODULE_LOCATION[3]="/kernel/drivers/video"' dkms.conf
       if (( $(vercmp "$_kernel" "6.8") >= 0 )); then
         _kernel68="1"
         _whitelist68=(525*)
-      fi
-
-      # 6.11
-      if (( $(vercmp "$_kernel" "6.11") >= 0 )); then
-        if [[ $pkgver = 560.* ]]; then
-          cd "$srcdir"/"$_pkg"/kernel-$_kernel
-          # Enable modeset and fbdev as default
-          # This avoids various issue, when Simplefb is used
-          # https://gitlab.archlinux.org/archlinux/packaging/packages/nvidia-utils/-/issues/14
-          # https://github.com/rpmfusion/nvidia-kmod/blob/master/make_modeset_default.patch
-          msg2 "Applying make-modeset-fbdev-default.diff for $_kernel..."
-          patch -Np2 -i "$srcdir"/make-modeset-fbdev-default.diff
-          # Add fix for fbdev "phantom" monitor with 6.11
-          # https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/80
-          msg2 "Applying 6.11-fbdev.diff for $_kernel..."
-          patch -Np2 -i "$srcdir"/6.11-fbdev.diff
-          cd ..
-        fi
       fi
 
       if [ "$_gcc14" = "true" ]; then
@@ -1470,22 +1446,6 @@ DEST_MODULE_LOCATION[3]="/kernel/drivers/video"' dkms.conf
         fi
       fi
 
-      # 6.11
-      if (( $(vercmp "$_kernel" "6.1") >= 0 )); then
-        if [[ $pkgver = 560.* ]]; then
-          # Enable modeset and fbdev as default
-          # This avoids various issue, when Simplefb is used
-          # https://gitlab.archlinux.org/archlinux/packaging/packages/nvidia-utils/-/issues/14
-          # https://github.com/rpmfusion/nvidia-kmod/blob/master/make_modeset_default.patch
-          msg2 "Applying make-modeset-fbdev-default.diff for dkms..."
-          patch -Np1 -i "$srcdir"/make-modeset-fbdev-default.diff
-          # Add fix for fbdev "phantom" monitor with 6.11
-          # https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/80
-          msg2 "Applying 6.11-fbdev.diff for dkms..."
-          patch -Np1 -i "$srcdir"/6.11-fbdev.diff
-        fi
-      fi
-
       if [ "$_gcc14" = "true" ]; then
         msg2 "Applying gcc-14 patch..."
         if [[ $pkgver = 470* ]]; then
@@ -1625,18 +1585,6 @@ nvidia-egl-wayland-tkg() {
     sed -i "s/Version:.*/Version: $_eglwver/g" "${pkgdir}"/usr/share/pkgconfig/wayland-eglstream-protocols.pc
     sed -i "s/Version:.*/Version: $_eglwver/g" "${pkgdir}"/usr/share/pkgconfig/wayland-eglstream.pc
 
-    # egl-gbm
-    if [ "$_eglgbm" = "true" ]; then
-      if [ -n "${_eglgver:-}" ]; then
-        install -Dm755 libnvidia-egl-gbm.so."${_eglgver}" "${pkgdir}"/usr/lib/libnvidia-egl-gbm.so."${_eglgver}"
-        ln -s libnvidia-egl-gbm.so."${_eglgver}" "${pkgdir}"/usr/lib/libnvidia-egl-gbm.so.1
-        ln -s libnvidia-egl-gbm.so.1 "${pkgdir}"/usr/lib/libnvidia-egl-gbm.so
-      fi
-      if [[ -e 15_nvidia_gbm.json ]]; then
-        install -Dm755 15_nvidia_gbm.json "${pkgdir}"/usr/share/egl/egl_external_platform.d/15_nvidia_gbm.json
-      fi
-    fi
-
     #lib32
     if [ "$_lib32" = "true" ]; then
       cd 32
@@ -1644,13 +1592,6 @@ nvidia-egl-wayland-tkg() {
         install -Dm755 libnvidia-egl-wayland.so."${_eglwver}" "${pkgdir}"/usr/lib32/libnvidia-egl-wayland.so."${_eglwver}"
         ln -s libnvidia-egl-wayland.so."${_eglwver}" "${pkgdir}"/usr/lib32/libnvidia-egl-wayland.so.1
         ln -s libnvidia-egl-wayland.so.1 "${pkgdir}"/usr/lib32/libnvidia-egl-wayland.so
-      fi
-      if [ "$_eglgbm" = "true" ]; then
-        if [ -n "${_eglgver:-}" ] && [[ -e libnvidia-egl-gbm.so."${_eglgver}" ]]; then
-          install -Dm755 libnvidia-egl-gbm.so."${_eglgver}" "${pkgdir}"/usr/lib32/libnvidia-egl-gbm.so."${_eglgver}"
-          ln -s libnvidia-egl-gbm.so."${_eglgver}" "${pkgdir}"/usr/lib32/libnvidia-egl-gbm.so.1
-          ln -s libnvidia-egl-gbm.so.1 "${pkgdir}"/usr/lib32/libnvidia-egl-gbm.so
-        fi
       fi
     fi
 }
@@ -1663,9 +1604,6 @@ EOF
 nvidia-utils-tkg() {
   pkgdesc="NVIDIA driver utilities and libraries for 'nvidia-tkg'"
   depends=('libglvnd' 'mesa' 'vulkan-icd-loader')
-  if [ "$_eglgbm" = "external" ]; then
-    depends+=('egl-gbm')
-  fi
   optdepends=('gtk2: nvidia-settings (GTK+ v2)'
               'gtk3: nvidia-settings (GTK+ v3)'
               'opencl-nvidia-tkg: OpenCL support'
@@ -1746,6 +1684,12 @@ nvidia-utils-tkg() {
     # GPU shader compilation helper
     if [[ -e libnvidia-gpucomp.so.${pkgver} ]]; then
       install -D -m755 "libnvidia-gpucomp.so.${pkgver}" "${pkgdir}/usr/lib/libnvidia-gpucomp.so.${pkgver}"
+    fi
+
+    # egl-gbm
+
+    if [[ -e 15_nvidia_gbm.json ]]; then
+        install -Dm755 15_nvidia_gbm.json "${pkgdir}"/usr/share/egl/egl_external_platform.d/15_nvidia_gbm.json
     fi
 
     if [[ $pkgver != 396* ]]; then
@@ -1918,10 +1862,6 @@ nvidia-utils-tkg() {
 
     install -Dm644 "$srcdir"/60-nvidia.rules "$pkgdir"/usr/lib/udev/rules.d/60-nvidia.rules
 
-    # Enable PreserveVideoMemoryAllocations and TemporaryFilePath
-    # Fixes Wayland Sleep, when restoring the session
-    install -Dm644 "$srcdir"/nvidia-sleep.conf "$pkgdir"/usr/lib/modprobe.d/nvidia-sleep.conf
-
     _create_links
 }
 source /dev/stdin <<EOF
@@ -2083,6 +2023,12 @@ lib32-nvidia-utils-tkg() {
     # GPU shader compilation helper
     if [[ -e libnvidia-gpucomp.so.${pkgver} ]]; then
       install -D -m755 "libnvidia-gpucomp.so.${pkgver}" "${pkgdir}/usr/lib32/libnvidia-gpucomp.so.${pkgver}"
+    fi
+
+    if [ -n "${_eglgver:-}" ] && [[ -e libnvidia-egl-gbm.so."${_eglgver}" ]]; then
+      install -Dm755 libnvidia-egl-gbm.so."${_eglgver}" "${pkgdir}"/usr/lib32/libnvidia-egl-gbm.so."${_eglgver}"
+      ln -s libnvidia-egl-gbm.so."${_eglgver}" "${pkgdir}"/usr/lib32/libnvidia-egl-gbm.so.1
+      ln -s libnvidia-egl-gbm.so.1 "${pkgdir}"/usr/lib32/libnvidia-egl-gbm.so
     fi
 
     if [[ -e libnvidia-ifr.so.${pkgver} ]]; then
